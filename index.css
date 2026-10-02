@@ -1577,3 +1577,7 @@ a:focus-visible, button:focus-visible {
   opacity: 1;
   bottom: 15px;
 }
+/* 9:16 gallery thumb variant, for portrait-format galleries like AI character consistency sets */
+.fav-card-portfolio-thumb.ratio-9-16 {
+  aspect-ratio: 9 / 16;
+}

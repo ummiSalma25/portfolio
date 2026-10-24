@@ -1084,6 +1084,29 @@ a:focus-visible, button:focus-visible {
   --bs-gutter-x: 28px;
   --bs-gutter-y: 36px;
 }
+
+/* Below 992px the grids become one swipeable row (keeps the page short);
+   from 992px up they stay as the normal 4-column grid. */
+@media (max-width: 991.98px) {
+  .portfolio-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 4px;
+  }
+
+  .portfolio-grid::-webkit-scrollbar { display: none; }
+
+  .portfolio-grid > .col {
+    flex: 0 0 auto;
+    width: 72%;
+    max-width: 320px;
+    scroll-snap-align: start;
+  }
+}
  
 .portfolio-card { display: block; color: var(--text); }
  
@@ -1580,4 +1603,232 @@ a:focus-visible, button:focus-visible {
 /* 9:16 gallery thumb variant, for portrait-format galleries like AI character consistency sets */
 .fav-card-portfolio-thumb.ratio-9-16 {
   aspect-ratio: 9 / 16;
+}
+
+/* ============================================
+   MOTION
+   Additive layer: hero entrance, scroll reveals, headings,
+   brand marquee and hover polish. The JS half lives at the
+   bottom of index.js. Reduced-motion users get none of it.
+   ============================================ */
+
+:root { --ease-out: cubic-bezier(.22, .8, .24, 1); }
+
+@keyframes m-fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes m-pop {
+  from { opacity: 0; transform: scale(.965); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes m-photo-in {
+  from { opacity: 0; transform: scale(1.06); clip-path: inset(14% 0 0 0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+
+@keyframes m-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes m-icon-swap {
+  from { opacity: 0; transform: rotate(-80deg) scale(.5); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- page-load entrance (pure CSS, no flash) ---------- */
+
+.hero-text > *,
+.case-hero > *,
+.portfolio-hero > *,
+.contact-hero > * {
+  animation: m-fade-up .9s var(--ease-out) both;
+}
+
+.hero-text > :nth-child(1), .case-hero > :nth-child(1), .portfolio-hero > :nth-child(1), .contact-hero > :nth-child(1) { animation-delay: .05s; }
+.hero-text > :nth-child(2), .case-hero > :nth-child(2), .portfolio-hero > :nth-child(2), .contact-hero > :nth-child(2) { animation-delay: .17s; }
+.hero-text > :nth-child(3), .case-hero > :nth-child(3), .portfolio-hero > :nth-child(3), .contact-hero > :nth-child(3) { animation-delay: .29s; }
+.case-hero > :nth-child(4) { animation-delay: .41s; }
+.case-hero > :nth-child(5) { animation-delay: .53s; }
+
+.hero-photo img {
+  animation: m-photo-in 1.2s .3s var(--ease-out) both;
+  transition: filter .7s ease;
+}
+
+.hero-photo img:hover { filter: grayscale(0) contrast(1.05); }
+
+.hero-photo { translate: 0 var(--py, 0px); }
+
+/* first row of cards on the portfolio page enters on load (the rest reveal on scroll) */
+#branding .portfolio-grid > .col { animation: m-pop .9s var(--ease-out) both; }
+#branding .portfolio-grid > .col:nth-child(1) { animation-delay: .55s; }
+#branding .portfolio-grid > .col:nth-child(2) { animation-delay: .65s; }
+#branding .portfolio-grid > .col:nth-child(3) { animation-delay: .75s; }
+#branding .portfolio-grid > .col:nth-child(4) { animation-delay: .85s; }
+
+/* ---------- scroll reveals (classes added by index.js) ---------- */
+
+.reveal,
+.reveal-scale {
+  opacity: 0;
+  transition: opacity .85s var(--ease-out), transform .85s var(--ease-out);
+  transition-delay: var(--rd, 0ms);
+}
+
+.reveal       { transform: translateY(28px); }
+.reveal-scale { transform: scale(.965); }
+
+.reveal.is-in,
+.reveal-scale.is-in { opacity: 1; transform: none; }
+
+/* eyebrow tags wipe in from the left */
+.m-tag {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path .8s var(--ease-out);
+  transition-delay: var(--rd, 0ms);
+}
+
+.m-tag.is-in { clip-path: inset(0 0 0 0); }
+
+/* big headings rise word by word */
+.m-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: .06em 0 .16em;
+  margin: -.06em 0 -.16em;
+}
+
+.m-word-in {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform .95s var(--ease-out);
+  transition-delay: var(--wd, 0ms);
+}
+
+.m-split.is-in .m-word-in { transform: none; }
+
+.record-num.is-counting { font-variant-numeric: tabular-nums; }
+
+/* ---------- brand strip becomes a slow marquee ---------- */
+
+.brands-strip.is-marquee {
+  display: block;
+  overflow: hidden;
+  gap: 0;
+  padding-bottom: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+.brands-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: m-marquee var(--marquee-dur, 50s) linear infinite;
+  animation-play-state: paused;
+}
+
+.brands-strip.is-ready .brands-track { animation-play-state: running; }
+.brands-strip.is-marquee:hover .brands-track { animation-play-state: paused; }
+
+.brands-strip.is-marquee a { padding-right: 56px; }
+
+.has-marquee .swipe-hint { display: none; }
+
+/* ---------- scroll progress + header ---------- */
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-deep);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.site-header { transition: box-shadow .35s ease; }
+.site-header.is-scrolled { box-shadow: 0 12px 30px -20px rgba(0, 0, 0, .55); }
+
+/* ---------- hover polish ---------- */
+
+@media (min-width: 992px) {
+  .main-nav a { position: relative; }
+
+  .main-nav a:not([aria-current="page"])::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform .35s var(--ease-out);
+  }
+
+  .main-nav a:not([aria-current="page"]):hover::after { transform: scaleX(1); }
+}
+
+.btn-primary i,
+.view-all-link i {
+  display: inline-block;
+  transition: transform .35s var(--ease-out);
+}
+
+.btn-primary:hover i,
+.view-all-link:hover i { transform: translateX(5px); }
+
+.case-thumb img,
+.case-thumb video { transition: transform 1s var(--ease-out); }
+
+.case-row:hover .case-thumb img,
+.case-row:hover .case-thumb video,
+.case-row2:hover .case-thumb img,
+.case-row2:hover .case-thumb video { transform: scale(1.045); }
+
+.case-category { transition: color .25s ease; }
+.case-row:hover .case-category,
+.case-row2:hover .case-category { color: var(--accent); }
+
+.fav-card-portfolio-thumb img { transition: transform .9s var(--ease-out); }
+.fav-portfolio-card:hover .fav-card-portfolio-thumb img { transform: scale(1.04); }
+
+/* ---------- theme switch: colours ease instead of snapping ---------- */
+
+.theme-toggle i { transition: transform .5s var(--ease-out); }
+.theme-toggle:hover i { transform: rotate(20deg); }
+.theme-toggle.is-switching i { animation: m-icon-swap .55s var(--ease-out); }
+
+html.m-theme-fade,
+html.m-theme-fade *,
+html.m-theme-fade *::before,
+html.m-theme-fade *::after {
+  transition: background-color .5s ease, color .5s ease, border-color .5s ease,
+              fill .5s ease, stroke .5s ease, box-shadow .5s ease, filter .5s ease !important;
+}
+
+/* ---------- page-to-page crossfade (Chrome/Edge/Safari; others just navigate) ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+
+::view-transition-group(root) { animation-duration: .35s; }
+
+/* ---------- reduced motion: switch the CSS-only entrances off ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text > *, .case-hero > *, .portfolio-hero > *, .contact-hero > *,
+  .hero-photo img, #branding .portfolio-grid > .col { animation: none !important; }
 }
